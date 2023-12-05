@@ -1,0 +1,27 @@
+SET MasterFile TO $'''Path\\To\\Spreadsheet\\File.xlsx'''
+SET PendingFolder TO $'''Path\\To\\Pending\\Folder'''
+SET CompletedFolder TO $'''Path\\To\\Completed\\Folder'''
+SET MyEmail TO $'''your_email@outlook.com'''
+SET InboxFolderName TO $'''Your_Outlook_Foldedr'''
+Outlook.Launch Instance=> OutlookInstance
+Outlook.RetrieveEmailMessages.RetrieveEmailsAndSaveAttachments Instance: OutlookInstance Account: MyEmail MailFolder: InboxFolderName EmailsToRetrieve: Outlook.RetrieveMessagesMode.Unread MarkAsRead: True SaveAttachmentsInto: PendingFolder Messages=> RetrievedEmails
+IF IsNotEmpty(RetrievedEmails) THEN
+    Excel.LaunchExcel.LaunchAndOpenUnderExistingProcess Path: MasterFile Visible: False ReadOnly: False Instance=> ExcelInstance
+    Folder.GetFiles Folder: PendingFolder FileFilter: $'''*.csv''' IncludeSubfolders: False FailOnAccessDenied: True SortBy1: Folder.SortBy.NoSort SortDescending1: False SortBy2: Folder.SortBy.NoSort SortDescending2: False SortBy3: Folder.SortBy.NoSort SortDescending3: False Files=> SalesFiles
+    LOOP FOREACH CurrentCSV IN SalesFiles
+        File.ReadFromCSVFile.ReadCSV CSVFile: CurrentCSV Encoding: File.CSVEncoding.UTF8 TrimFields: True FirstLineContainsColumnNames: True ColumnsSeparator: File.CSVColumnsSeparator.SystemDefault CSVTable=> CSVTable
+        Excel.GetFirstFreeColumnRow Instance: ExcelInstance FirstFreeRow=> FirstFreeRow
+        Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: CSVTable Column: $'''A''' Row: FirstFreeRow
+    END
+    Excel.CloseExcel.CloseAndSave Instance: ExcelInstance
+    Outlook.SendEmailThroughOutlook.SendEmail Instance: OutlookInstance Account: MyEmail SendTo: MyEmail Subject: $'''Monthly Sales Report''' Body: $'''Hello!
+
+Here is the monthly sales report. 
+
+Please let me know if you have any questions.
+
+Sincerely,
+Insert_Name_Here''' IsBodyHtml: False Attachments: MasterFile
+    WAIT 5
+    Outlook.Close Instance: OutlookInstance
+END

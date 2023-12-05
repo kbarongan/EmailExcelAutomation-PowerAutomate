@@ -12,16 +12,18 @@ IF IsNotEmpty(RetrievedEmails) THEN
         File.ReadFromCSVFile.ReadCSV CSVFile: CurrentCSV Encoding: File.CSVEncoding.UTF8 TrimFields: True FirstLineContainsColumnNames: True ColumnsSeparator: File.CSVColumnsSeparator.SystemDefault CSVTable=> CSVTable
         Excel.GetFirstFreeColumnRow Instance: ExcelInstance FirstFreeRow=> FirstFreeRow
         Excel.WriteToExcel.WriteCell Instance: ExcelInstance Value: CSVTable Column: $'''A''' Row: FirstFreeRow
+        File.Move Files: CurrentCSV Destination: CompletedFolder IfFileExists: File.IfExists.Overwrite MovedFiles=> MovedFiles
     END
     Excel.CloseExcel.CloseAndSave Instance: ExcelInstance
     Outlook.SendEmailThroughOutlook.SendEmail Instance: OutlookInstance Account: MyEmail SendTo: MyEmail Subject: $'''Monthly Sales Report''' Body: $'''Hello!
 
-Here is the monthly sales report. 
+Here is this month\'s sales report.
 
-Please let me know if you have any questions.
+Let me know if you have any questions.
 
 Sincerely,
-Insert_Name_Here''' IsBodyHtml: False Attachments: MasterFile
+
+YourNameHere''' IsBodyHtml: False Attachments: MasterFile
     WAIT 5
     Outlook.Close Instance: OutlookInstance
 END
